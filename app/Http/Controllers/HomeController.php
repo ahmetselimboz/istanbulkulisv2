@@ -95,7 +95,7 @@ class HomeController extends Controller
             $id30['code'] = "";
         }
 
- 
+
 
         $single_box_ones = Post::where(['publish' => 0, 'location' => 0])->where('created_at', '<=', date("Y-m-d H:i:s"))->orderBy('id', 'desc')->take(4)->get();
 
@@ -285,7 +285,7 @@ class HomeController extends Controller
             $id32['code'] = "";
         }
 
-        $post->addView();
+        views($post)->record();
 
         return view('frontend.post', compact('post', 'latestnews', 'comments', 'id7', 'id8', 'id9', 'id10', 'id32', 'otherpost'));
     }
@@ -389,7 +389,7 @@ class HomeController extends Controller
             $id17['code'] = "";
         }
 
-        $video->addView();
+        views($video)->record();
         return view('frontend.video', compact('video', 'othervideos', 'id14', 'id15', 'id16', 'id17'));
     }
 
@@ -497,7 +497,7 @@ class HomeController extends Controller
             $id22['code'] = "";
         }
 
-        $article->addView();
+        views($article)->record();
         return view('frontend.article', compact('article', 'id21', 'id22'));
     }
 
