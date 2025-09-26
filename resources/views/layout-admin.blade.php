@@ -494,6 +494,11 @@
                                                     </li>
                                                 </ul>
                                             </li>
+                                            <li class="">
+                                                <a href="{{ route('admin.cron.settings') }}" class="waves-effect waves-dark">
+                                                    <span class="pcoded-mtext">Döviz Kurları Ayarları</span>
+                                                </a>
+                                            </li>
                                         </ul>
                                     </li>
                                 </ul>

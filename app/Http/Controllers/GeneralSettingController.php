@@ -486,30 +486,176 @@ class GeneralSettingController extends Controller
 
     public function exchange()
     {
-        //$doviz = json_decode(file_get_contents("http://hakandoviz.com/data_matriks.php?d=doviz"));
-        //$repo = array("usd" => $doviz->doviz[0]->satis, "usd_simge" => $doviz->doviz[0]->simge, "euro" => $doviz->doviz[1]->satis,  "euro_simge" => $doviz->doviz[1]->simge,  "sterlin" => $doviz->doviz[2]->satis, "sterlin_simge" => $doviz->doviz[2]->simge);
-        //$exchange = file_get_contents("https://finans.truncgil.com/v3/today.json");
-
-
         $finalData = [
             'currencies' => $this->currency(),
             'gold' => $this->gold(),
             'borsaIstanbul' => $this->bist(),
             "coin" => $this->coin(),
-            'last_update' => now()->toDateTimeString(),
+            'last_update' => now()->format('d.m.Y H:i:s'),
+            'timezone' => 'Europe/Istanbul',
         ];
-
 
         $jsonData = json_encode($finalData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 
-
-
-
-        // $exchange = file_get_contents('https://api.genelpara.com/embed/para-birimleri.json');
-
-
-
         Storage::disk('public')->put('exchange.json', $jsonData);
+    }
+
+    /**
+     * Cron job için exchange güncelleme
+     * CPanel'den erişilebilir route
+     */
+    public function cronExchangeUpdate()
+    {
+        // Cron aktif mi kontrol et
+        $cronSettings = $this->getCronSettings();
+        if (!$cronSettings['active']) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cron job devre dışı',
+                'timestamp' => now()->format('d.m.Y H:i:s')
+            ], 403);
+        }
+
+        try {
+            // Exchange verilerini güncelle
+            $this->exchange();
+
+            // Log dosyasına kaydet
+            $logData = [
+                'status' => 'success',
+                'message' => 'Exchange rates updated successfully',
+                'timestamp' => now()->format('d.m.Y H:i:s'),
+                'timezone' => 'Europe/Istanbul',
+                'ip' => request()->ip(),
+                'user_agent' => request()->userAgent()
+            ];
+
+            Storage::disk('public')->put('exchange_cron_log.json', json_encode($logData, JSON_PRETTY_PRINT));
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Döviz kurları başarıyla güncellendi',
+                'timestamp' => now()->format('d.m.Y H:i:s')
+            ]);
+
+        } catch (\Exception $e) {
+            // Hata log'u
+            $errorData = [
+                'status' => 'error',
+                'message' => $e->getMessage(),
+                'timestamp' => now()->format('d.m.Y H:i:s'),
+                'timezone' => 'Europe/Istanbul',
+                'ip' => request()->ip()
+            ];
+
+            Storage::disk('public')->put('exchange_cron_error.json', json_encode($errorData, JSON_PRETTY_PRINT));
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Hata: ' . $e->getMessage(),
+                'timestamp' => now()->format('d.m.Y H:i:s')
+            ], 500);
+        }
+    }
+
+    /**
+     * Cron ayarlarını getir
+     */
+    private function getCronSettings()
+    {
+        $default = [
+            'active' => true,
+            'interval' => 12, // saat
+            'last_run' => null
+        ];
+
+        if (Storage::disk('public')->exists('cron_settings.json')) {
+            $settings = json_decode(Storage::disk('public')->get('cron_settings.json'), true);
+            return array_merge($default, $settings);
+        }
+
+        return $default;
+    }
+
+    /**
+     * Cron ayarlarını kaydet
+     */
+    private function saveCronSettings($settings)
+    {
+        Storage::disk('public')->put('cron_settings.json', json_encode($settings, JSON_PRETTY_PRINT));
+    }
+
+    /**
+     * Admin - Cron ayarları sayfası
+     */
+    public function cronSettings()
+    {
+        $cronSettings = $this->getCronSettings();
+
+        // Son log'ları oku
+        $lastSuccess = null;
+        $lastError = null;
+
+        if (Storage::disk('public')->exists('exchange_cron_log.json')) {
+            $lastSuccess = json_decode(Storage::disk('public')->get('exchange_cron_log.json'), true);
+        }
+
+        if (Storage::disk('public')->exists('exchange_cron_error.json')) {
+            $lastError = json_decode(Storage::disk('public')->get('exchange_cron_error.json'), true);
+        }
+
+        return view('admin.cron-settings', compact('cronSettings', 'lastSuccess', 'lastError'));
+    }
+
+    /**
+     * Admin - Cron aktif/pasif toggle
+     */
+    public function cronToggle(Request $request)
+    {
+        $settings = $this->getCronSettings();
+        $settings['active'] = $request->boolean('active');
+        $this->saveCronSettings($settings);
+
+        $message = $settings['active'] ? 'Cron job aktif edildi' : 'Cron job devre dışı bırakıldı';
+
+        return response()->json([
+            'success' => true,
+            'message' => $message,
+            'active' => $settings['active']
+        ]);
+    }
+
+    /**
+     * Admin - Cron durum kontrolü
+     */
+    public function cronStatus()
+    {
+        $settings = $this->getCronSettings();
+
+        return response()->json([
+            'active' => $settings['active'],
+            'interval' => $settings['interval'],
+            'last_run' => $settings['last_run'] ?? 'Henüz çalışmadı',
+            'cron_url' => route('cron.exchange')
+        ]);
+    }
+
+    /**
+     * Admin - Cron log'larını görüntüle
+     */
+    public function cronLogs()
+    {
+        $logs = [];
+
+        if (Storage::disk('public')->exists('exchange_cron_log.json')) {
+            $logs['success'] = json_decode(Storage::disk('public')->get('exchange_cron_log.json'), true);
+        }
+
+        if (Storage::disk('public')->exists('exchange_cron_error.json')) {
+            $logs['error'] = json_decode(Storage::disk('public')->get('exchange_cron_error.json'), true);
+        }
+
+        return response()->json($logs);
     }
 
 

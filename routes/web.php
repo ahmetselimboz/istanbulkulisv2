@@ -179,7 +179,12 @@ Route::prefix('manage')->middleware(['checkrole', 'checkactive', 'admingm'])->gr
 
     Route::get('/staticword/{langId}', [GeneralSettingController::class, 'staticword'])->name('language.staticword');
 
-
+    // Exchange güncelleme route (cron job için)
+    Route::get('/cron/exchange-update', [GeneralSettingController::class, 'cronExchangeUpdate'])->name('cron.exchange');
+    Route::get('/cron/settings', [GeneralSettingController::class, 'cronSettings'])->name('admin.cron.settings');
+    Route::post('/cron/toggle', [GeneralSettingController::class, 'cronToggle'])->name('admin.cron.toggle');
+    Route::get('/cron/status', [GeneralSettingController::class, 'cronStatus'])->name('admin.cron.status');
+    Route::get('/cron/logs', [GeneralSettingController::class, 'cronLogs'])->name('admin.cron.logs');
 
     Route::get('/cache-clear', [GeneralSettingController::class, 'optimize'])->name('clear-cache');
     Route::get('/runjson/', [GeneralSettingController::class, 'runjson'])->name('runjson');
@@ -324,7 +329,3 @@ Route::middleware(['maintenance', 'generalmiddleware', 'checkdomain', 'setlocale
 
 
 
-
-Auth::routes();
-
-Route::get('/home', [HomeController::class, 'index'])->name('home');
