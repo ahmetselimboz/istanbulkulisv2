@@ -1,0 +1,15 @@
+User-agent: *
+Allow: /
+
+
+Sitemap: https://istanbulkulis.com/sitemap.xml
+
+
+
+User-agent: *
+Disallow: /cgi-bin/
+Disallow: /vendor/
+Disallow: /canli
+Disallow: /getweather
+
+
