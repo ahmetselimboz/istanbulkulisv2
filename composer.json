@@ -10,8 +10,16 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
+        "barryvdh/laravel-debugbar": "^3.16",
+        "berkayk/onesignal-laravel": "^2.4",
+        "buzz/laravel-google-captcha": "^2.3",
+        "cyrildewit/eloquent-viewable": "^7.0",
         "laravel/framework": "^12.0",
-        "laravel/tinker": "^2.10.1"
+        "laravel/socialite": "^5.23",
+        "laravel/tinker": "^2.10.1",
+        "laravel/ui": "^4.6",
+        "realrashid/sweet-alert": "^7.3",
+        "spatie/laravel-newsletter": "^5.3"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
@@ -27,7 +35,10 @@
             "App\\": "app/",
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/"
-        }
+        },
+        "files": [
+            "app/Helpers/LegacyHelpers.php"
+        ]
     },
     "autoload-dev": {
         "psr-4": {
