@@ -115,15 +115,51 @@
                             @endif
                         </div>
 
-                        {{-- Test Butonu --}}
-                        <div class="mt-4">
-                            <button type="button" class="btn btn-primary" id="testCron">
-                                <i class="fas fa-play"></i> Cron Job'u Test Et
-                            </button>
-                            <button type="button" class="btn btn-info" id="refreshLogs">
-                                <i class="fas fa-sync"></i> Log'ları Yenile
-                            </button>
-                        </div>
+                         {{-- Cron Monitoring --}}
+                         <div class="card mb-4">
+                             <div class="card-header">
+                                 <h5><i class="fas fa-chart-line"></i> Cron Job Monitoring</h5>
+                             </div>
+                             <div class="card-body">
+                                 <div class="row">
+                                     <div class="col-md-4">
+                                         <strong>Son Exchange Güncellemesi:</strong>
+                                         <p id="lastExchangeUpdate" class="text-info">Yükleniyor...</p>
+                                     </div>
+                                     <div class="col-md-4">
+                                         <strong>Şimdiki Zaman:</strong>
+                                         <p id="currentTime" class="text-primary">{{ now()->format('d.m.Y H:i:s') }}</p>
+                                     </div>
+                                     <div class="col-md-4">
+                                         <strong>Bir Sonraki Beklenen Çalışma:</strong>
+                                         <p id="nextRun" class="text-warning">Hesaplanıyor...</p>
+                                     </div>
+                                 </div>
+                                 <div class="row mt-3">
+                                     <div class="col-md-6">
+                                         <strong>Cron Durumu:</strong>
+                                         <span id="cronHealthStatus" class="badge badge-secondary">Kontrol ediliyor...</span>
+                                     </div>
+                                     <div class="col-md-6">
+                                         <strong>Son 24 Saat İçinde Çalışma:</strong>
+                                         <span id="last24Hours" class="badge badge-secondary">Kontrol ediliyor...</span>
+                                     </div>
+                                 </div>
+                             </div>
+                         </div>
+
+                         {{-- Test Butonu --}}
+                         <div class="mt-4">
+                             <button type="button" class="btn btn-primary" id="testCron">
+                                 <i class="fas fa-play"></i> Cron Job'u Test Et
+                             </button>
+                             <button type="button" class="btn btn-info" id="refreshLogs">
+                                 <i class="fas fa-sync"></i> Log'ları Yenile
+                             </button>
+                             <button type="button" class="btn btn-success" id="checkHealth">
+                                 <i class="fas fa-heartbeat"></i> Sağlık Kontrolü
+                             </button>
+                         </div>
 
                         {{-- Test Sonucu --}}
                         <div id="testResult" class="mt-3" style="display: none;"></div>
@@ -181,16 +217,88 @@
                 });
             });
 
-            // Refresh logs
-            $('#refreshLogs').click(function() {
-                window.location.reload();
-            });
-        });
+         // Refresh logs
+             $('#refreshLogs').click(function() {
+                 loadCronStatus();
+                 toastr.info('Log\'lar yenilendi');
+             });
 
-        function copyToClipboard(text) {
-            navigator.clipboard.writeText(text).then(function() {
-                toastr.success('URL kopyalandı!');
-            });
-        }
+             // Health check
+             $('#checkHealth').click(function() {
+                 loadCronStatus();
+                 toastr.info('Sağlık kontrolü yapıldı');
+             });
+
+             // Sayfa yüklendiğinde status'u yükle
+             loadCronStatus();
+
+             // Her 30 saniyede bir otomatik yenile
+             setInterval(function() {
+                 loadCronStatus();
+             }, 30000);
+         });
+
+         function loadCronStatus() {
+             $.get('{{ route("admin.cron.logs") }}').done(function(response) {
+                 // Son exchange güncellemesi
+                 if (response.status && response.status.exchange_last_update) {
+                     $('#lastExchangeUpdate').text(response.status.exchange_last_update);
+                 }
+
+                 // Şimdiki zaman
+                 if (response.status && response.status.current_time) {
+                     $('#currentTime').text(response.status.current_time);
+                 }
+
+                 // Bir sonraki çalışma
+                 if (response.status && response.status.next_expected_run) {
+                     $('#nextRun').text(response.status.next_expected_run);
+                 }
+
+                 // Cron sağlık durumu
+                 let healthStatus = 'Bilinmiyor';
+                 let healthClass = 'badge-secondary';
+                 
+                 if (response.status && response.status.cron_settings) {
+                     if (response.status.cron_settings.active) {
+                         healthStatus = '✅ Aktif';
+                         healthClass = 'badge-success';
+                     } else {
+                         healthStatus = '❌ Pasif';
+                         healthClass = 'badge-danger';
+                     }
+                 }
+                 
+                 $('#cronHealthStatus').removeClass().addClass('badge ' + healthClass).text(healthStatus);
+
+                 // Son 24 saat kontrolü
+                 let last24Status = 'Veri yok';
+                 let last24Class = 'badge-warning';
+                 
+                 if (response.success && response.success.timestamp) {
+                     const lastRun = new Date(response.success.timestamp.replace(/(\d{2})\.(\d{2})\.(\d{4}) (\d{2}):(\d{2}):(\d{2})/, '$3-$2-$1T$4:$5:$6'));
+                     const now = new Date();
+                     const diffHours = (now - lastRun) / (1000 * 60 * 60);
+                     
+                     if (diffHours <= 24) {
+                         last24Status = '✅ Son 24 saatte çalıştı';
+                         last24Class = 'badge-success';
+                     } else {
+                         last24Status = '⚠️ 24 saatten fazla çalışmadı';
+                         last24Class = 'badge-warning';
+                     }
+                 }
+                 
+                 $('#last24Hours').removeClass().addClass('badge ' + last24Class).text(last24Status);
+             }).fail(function() {
+                 console.log('Cron status yüklenemedi');
+             });
+         }
+
+         function copyToClipboard(text) {
+             navigator.clipboard.writeText(text).then(function() {
+                 toastr.success('URL kopyalandı!');
+             });
+         }
     </script>
 @endsection

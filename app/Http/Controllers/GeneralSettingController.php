@@ -646,18 +646,55 @@ class GeneralSettingController extends Controller
     public function cronLogs()
     {
         $logs = [];
+        $exchangeData = null;
 
+        // Başarı log'u
         if (Storage::disk('public')->exists('exchange_cron_log.json')) {
             $logs['success'] = json_decode(Storage::disk('public')->get('exchange_cron_log.json'), true);
         }
 
+        // Hata log'u
         if (Storage::disk('public')->exists('exchange_cron_error.json')) {
             $logs['error'] = json_decode(Storage::disk('public')->get('exchange_cron_error.json'), true);
         }
 
+        // Exchange verilerinin son güncellenme tarihi
+        if (Storage::disk('public')->exists('exchange.json')) {
+            $exchangeRaw = Storage::disk('public')->get('exchange.json');
+            $exchangeData = json_decode($exchangeRaw, true);
+        }
+
+        // Detaylı cron durumu
+        $logs['status'] = [
+            'exchange_last_update' => $exchangeData['last_update'] ?? 'Henüz güncellenmedi',
+            'exchange_timezone' => $exchangeData['timezone'] ?? 'Bilinmiyor',
+            'current_time' => now()->format('d.m.Y H:i:s'),
+            'server_timezone' => config('app.timezone'),
+            'cron_settings' => $this->getCronSettings(),
+            'next_expected_run' => $this->getNextExpectedRun()
+        ];
+
         return response()->json($logs);
     }
 
+    /**
+     * Bir sonraki beklenen cron çalışma zamanını hesapla
+     */
+    private function getNextExpectedRun()
+    {
+        $now = now();
+        $today6 = $now->copy()->hour(6)->minute(0)->second(0);
+        $today18 = $now->copy()->hour(18)->minute(0)->second(0);
+        $tomorrow6 = $now->copy()->addDay()->hour(6)->minute(0)->second(0);
+
+        if ($now->lessThan($today6)) {
+            return $today6->format('d.m.Y H:i:s');
+        } elseif ($now->lessThan($today18)) {
+            return $today18->format('d.m.Y H:i:s');
+        } else {
+            return $tomorrow6->format('d.m.Y H:i:s');
+        }
+    }
 
     public function imagerepo(Request $request)
     {
