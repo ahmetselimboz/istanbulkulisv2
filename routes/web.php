@@ -66,7 +66,7 @@ Route::prefix('manage')->middleware(['checkrole', 'checkactive', 'admingm'])->gr
     Route::get('/article/edit/{id}', [ArticleController::class, 'edit'])->name('article.edit');
     Route::post('/article/edit/{id}', [ArticleController::class, 'update'])->name('article.update');
     Route::get('/article/delete/{id}', [ArticleController::class, 'destroy'])->name('article.destroy');
-
+    Route::post('article/editorimagesupload', [ArticleController::class, 'uploadMultipleEditorImages'])->name('article.editor.upload.multiple');
 
     Route::get('/page', [PageController::class, 'index'])->name('page.index');
     Route::get('/page/create', [PageController::class, 'create'])->name('page.create');
@@ -74,7 +74,6 @@ Route::prefix('manage')->middleware(['checkrole', 'checkactive', 'admingm'])->gr
     Route::get('/page/edit/{id}', [PageController::class, 'edit'])->name('page.edit');
     Route::post('/page/edit/{id}', [PageController::class, 'update'])->name('page.update');
     Route::get('/page/delete/{id}', [PageController::class, 'destroy'])->name('page.destroy');
-
 
     Route::get('/comment', [CommentController::class, 'index'])->name('comment.index');
     Route::get('/comment/edit/{id}', [CommentController::class, 'edit'])->name('comment.edit');
@@ -251,6 +250,7 @@ Route::middleware(['maintenance', 'generalmiddleware', 'checkdomain', 'setlocale
     Route::get('/foto-galeri/{id}/{slug}', [HomeController::class, 'photogallery'])->name('frontend.photogallery');
     Route::get('/sayfa/{id}/{slug}', [HomeController::class, 'page'])->name('frontend.page');
     Route::post('/arama', [HomeController::class, 'search'])->name('frontend.search');
+    Route::get('/makaleler', [HomeController::class, 'articleAll'])->name('frontend.articleAll');
     Route::get('/makale/{id}/{slug}', [HomeController::class, 'article'])->name('frontend.article');
     Route::get('/kose-yazari/{id}', [HomeController::class, 'author'])->name('frontend.author');
     Route::get('/kose-yazarlari', [HomeController::class, 'authorall'])->name('frontend.authorall');

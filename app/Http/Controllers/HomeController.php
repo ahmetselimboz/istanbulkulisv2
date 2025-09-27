@@ -482,6 +482,12 @@ class HomeController extends Controller
         return view('frontend.search', compact('searchtext', 'searchresult'));
     }
 
+    public function articleAll()
+    {
+        $articles = Article::where('publish', 0)->with(['author', 'category'])->orderBy('id', 'desc')->paginate(20);
+        return view('frontend.articleall', compact('articles'));
+    }
+
     public function article(Request $request, $id)
     {
         $article = Article::findOrFail($id);
@@ -917,11 +923,6 @@ class HomeController extends Controller
         dd("dur");
 
     }
-
-
-
-
-
 
 
 

@@ -2,86 +2,74 @@
 
 @section('meta')
     <title>{{ $author->name }}</title>
-    <meta name="description" content="{{ str_limit(strip_tags($author->about), $limit = '145', $end = '') }}">
-
-    <meta property="og:sitename" content="{{ $general->site_title }}" />
-    <meta property="og:url" content="{{ route('frontend.author', ['id' => $author->id]) }}" />
-    <meta property="og:type" content="article" />
-    <meta property="og:title" content="{{ $author->name }}" />
-    <meta property="og:description" content="{{ str_limit(strip_tags($author->about), $limit = '145', $end = '') }}" />
-    <meta property="og:image" content="{{ route('frontend.index') }}/uploads/{{ $author->avatar }}" />
-
-    <meta name="twitter:url" content="{{ route('frontend.author', ['id' => $author->id]) }}" />
-    <meta name="twitter:domain" content="{{ $general->site_url }}" />
-    <meta name="twitter:site" content="{{ $general->site_title }}" />
-    <meta name="twitter:title" content="{{ $author->name }}" />
-    <meta name="twitter:description" content="{{ str_limit(strip_tags($author->about), $limit = '145', $end = '') }}" />
-    <meta name="twitter:image:src" content="{{ route('frontend.index') }}/uploads/{{ $author->avatar }}" />
-@endsection
-
-@section('css')
+    <meta name="description" content="{{ Str::limit(strip_tags($author->about), 145) }}">
 @endsection
 
 @section('content')
+    <div class="container py-4">
+        <div class="row">
+            <!-- Makaleler -->
+            <div class="col-md-8">
+                <h2 class="mb-4">{{ $author->name }} - Yazıları</h2>
 
-    <section class="banner-parallax overlay-dark" data-image-src="images/inner-banner.jpg" data-parallax="scroll">
-        <div class="inner-banner">
-            <h3>Köşe Yazarı</h3>
-            <ul class="tm-breadcrum">
-                <li>{{ $author->name }}</li>
-            </ul>
-        </div>
-    </section>
+                @if ($articles->count())
+                    @foreach ($articles as $article)
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <!-- Başlık -->
+                                <h5 class="card-title">
+                                    <a href="{{ route('frontend.article', ['id' => $article->id, 'slug' => $article->slug]) }}"
+                                       class="text-dark text-decoration-none">
+                                        {{ $article->title }}
+                                    </a>
+                                </h5>
 
-    <div class="theme-padding">
-        <div class="container">
-            <div class="row">
-                <div class="col-md-8 col-sm-8">
-                    <div class="post-widget m-0">
-                        <div class="p-30 light-shadow white-bg">
-                            <ul class="list-posts haspad" id="catPage_listing">
-                                @if ($articles->count())
-                                    @foreach ($articles as $article)
-                                        <li>
-                                            <div class="row">
-                                                <div class="col-sm-12 col-xs-12">
-                                                    <div class="post-content">
-                                                        <h4><a
-                                                                href="{{ route('frontend.article', ['id' => $article->id, 'slug' => $article->slug]) }}">{{ $article->title }}</a>
-                                                        </h4>
-                                                        <ul class="post-meta">
-                                                            <li><i
-                                                                    class="fa fa-clock-o"></i>{{ date('d-m-Y', strtotime($article->created_at)) }}
-                                                            </li>
-                                                            <li><i class="fa fa-eye"></i>{{ views($article)->count() }}
-                                                            </li>
-                                                        </ul>
-                                                        <p> {!! str_limit(strip_tags($article->detail), $limit = '250', $end = '....') !!}
-                                                            <br>
-                                                            <a href="{{ route('frontend.article', ['id' => $article->id, 'slug' => $article->slug]) }}"
-                                                                class="read-more"></a>
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </li>
-                                    @endforeach
-                                @else
-                                    İçerik Bulunamadı
-                                @endif
-                            </ul>
+                                <!-- Meta -->
+                                <p class="text-muted small mb-2">
+                                    <i class="fa fa-calendar"></i> {{ date('d.m.Y', strtotime($article->created_at)) }}
+                                    • <i class="fa fa-eye"></i> {{ views($article)->count() }} görüntüleme
+                                </p>
+
+                                <!-- İçerik Özeti -->
+                                <p class="card-text">
+                                    {{ Str::limit(strip_tags($article->detail), 200, '...') }}
+                                </p>
+
+                                <a href="{{ route('frontend.article', ['id' => $article->id, 'slug' => $article->slug]) }}"
+                                   class="btn btn-primary btn-sm">Devamını Oku</a>
+                            </div>
                         </div>
+                    @endforeach
+
+                    <!-- Sayfalama -->
+                    <div class="mt-4">
                         {{ $articles->links() }}
                     </div>
+                @else
+                    <div class="alert alert-info">Bu yazarın henüz yazısı bulunmuyor.</div>
+                @endif
+            </div>
+
+            <!-- Yazar Bilgisi -->
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <!-- Avatar -->
+                        <img src="{{ route('frontend.index') }}/uploads/{{ $author->avatar ?? 'default.png' }}"
+                             alt="{{ $author->name }}"
+                             class="rounded-circle mb-3"
+                             style="width:120px; height:120px; object-fit:cover;">
+
+                        <!-- İsim -->
+                        <h5 class="card-title">{{ $author->name }}</h5>
+
+                        <!-- Hakkında -->
+                        <p class="card-text text-muted">
+                            {{ $author->about ?? 'Yazar hakkında bilgi bulunmamaktadır.' }}
+                        </p>
+                    </div>
                 </div>
-
-                @include('frontend.sidebar')
-
             </div>
         </div>
-        <!-- Content -->
     </div>
-@endsection
-
-@section('js')
 @endsection

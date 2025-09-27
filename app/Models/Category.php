@@ -16,4 +16,9 @@ class Category extends Model
         $result = DB::table('category')->where('parent_id', $id)->get();
         return $result;
     }
+
+    public function articles()
+    {
+        return $this->hasMany(Article::class, 'category_id');
+    }
 }

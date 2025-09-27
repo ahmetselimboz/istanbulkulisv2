@@ -58,11 +58,11 @@ class ArticleController extends Controller
 
         $article->save();
 
-        if($article){
-            alert('Başarılı','İşlem başarılı şekilde tamamlanmıştır.', 'success')->autoClose(1000);
+        if ($article) {
+            alert('Başarılı', 'İşlem başarılı şekilde tamamlanmıştır.', 'success')->autoClose(1000);
             return redirect()->route('article.edit', ['id' => $article->id]);
-        }else {
-            alert()->error('Başarısız','İşlem sırasında bir hata meydana gelmiştir.')->autoClose(2000);
+        } else {
+            alert()->error('Başarısız', 'İşlem sırasında bir hata meydana gelmiştir.')->autoClose(2000);
             return back();
         }
     }
@@ -120,11 +120,11 @@ class ArticleController extends Controller
 
         $article->save();
 
-        if($article){
-            alert('Başarılı','İşlem başarılı şekilde tamamlanmıştır.', 'success')->autoClose(1000);
+        if ($article) {
+            alert('Başarılı', 'İşlem başarılı şekilde tamamlanmıştır.', 'success')->autoClose(1000);
             return back();
-        }else {
-            alert()->error('Başarısız','İşlem sırasında bir hata meydana gelmiştir.')->autoClose(2000);
+        } else {
+            alert()->error('Başarısız', 'İşlem sırasında bir hata meydana gelmiştir.')->autoClose(2000);
             return back();
         }
     }
@@ -138,12 +138,57 @@ class ArticleController extends Controller
     public function destroy($id)
     {
         $article = Article::destroy($id);
-        if($article){
-            alert('Başarılı','İşlem başarılı şekilde tamamlanmıştır.', 'success')->autoClose(1000);
+        if ($article) {
+            alert('Başarılı', 'İşlem başarılı şekilde tamamlanmıştır.', 'success')->autoClose(1000);
             return back();
-        }else {
-            alert()->error('Başarısız','İşlem sırasında bir hata meydana gelmiştir.')->autoClose(2000);
+        } else {
+            alert()->error('Başarısız', 'İşlem sırasında bir hata meydana gelmiştir.')->autoClose(2000);
             return back();
         }
+    }
+
+    public function uploadMultipleEditorImages(Request $request)
+    {
+        if (!$request->hasFile('images')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Herhangi bir dosya gönderilmedi.'
+            ], 400);
+        }
+
+        $uploadedImageUrls = [];
+
+        foreach ((array) $request->file('images') as $imageFile) {
+            if (!$imageFile->isValid()) {
+                continue;
+            }
+
+            $extension = $imageFile->extension();
+            if (!in_array(strtolower($extension), ['jpg', 'jpeg', 'png', 'gif', 'webp'])) {
+                continue;
+            }
+
+            try {
+                $imageName = time() . '_' . uniqid('edtr_', true) . '.' . $extension;
+                $imageFile->move(public_path('uploads/'), $imageName);
+                $uploadedImageUrls[] = asset('uploads/' . $imageName);
+            } catch (\Exception $e) {
+                // tek tek hataları atla, kalanları yüklemeye devam et
+                continue;
+            }
+        }
+
+        if (empty($uploadedImageUrls)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Yüklenebilir geçerli bir resim bulunamadı.'
+            ], 400);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Resimler başarıyla yüklendi.',
+            'images' => $uploadedImageUrls,
+        ]);
     }
 }

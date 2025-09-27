@@ -19,10 +19,10 @@
     <link rel="stylesheet" href="{{ asset('frontend/sonsayfa/css/swiper-bundle.min.css') }}">
     <link rel="stylesheet" href="{{ asset('frontend/sonsayfa/css/app.css') }}">
 
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family={{ $general->body_font }}">
-    <style>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=HeronSans">
+    <style>    
         body {
-            font-family: '{{ $general->body_font }}' !important;
+            font-family: 'HeronSans' !important;
         }
     </style>
 

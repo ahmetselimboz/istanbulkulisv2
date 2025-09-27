@@ -18,4 +18,8 @@ class Article extends Model implements Viewable
         return $this->belongsTo('App\Models\User', 'user_id');
     }
 
+    public function category()
+    {
+        return $this->belongsTo(Category::class, 'category_id');
+    }
 }
